@@ -1,4 +1,6 @@
    {% load static %}
+   {% load filters %}
+   
    <nav class="navbar navbar-dark bg-primary navbar-expand-lg">
         <a class="navbar-brand" href="{% url 'produto:lista' %}">E-commerce</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
@@ -35,7 +37,7 @@
                             Carrinho
                         </span>
                         <span class="nav-cart-count mr-1">
-                            <strong>1x</strong>
+                            <strong>{{ request.session.carrinho|cart_total_qtd }}x</strong>
                         </span>
                         <span class="nav-cart-icon mr-2">
                             <i class="fas fa-shopping-cart"></i>
