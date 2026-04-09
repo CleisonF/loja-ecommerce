@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% load filters %}
+
+{% block conteudo %}
+
+
+<div class="row">
+    <div class="col-lg">
+        <div class="row no gutters">
+            <div class="col-lg-12">
+                {% if produto.imagem %}
+                    <img class="img-fluid" src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg">
+        <div class="mt-4 mt-lg-0">
+            <h1 class="h2">{{ produto.nome }}</h1>
+            <p class="lead">{{ produto.descricao }}</p>
+
+            <p class="lead">
+                {% if produto.preco_marketing_promocional %}
+                    <span id="variation-preco-promocional" class="lead product-price">
+                        {{ produto.preco_marketing_promocional | formatar_preco }}
+                    </span>
+                    <span id="variation-preco" class="lead product-old-price text-muted">
+                        {{ produto.preco_marketing | formatar_preco }}
+                    </span>  
+                {% else %}
+                      <span id="variation-preco" class="lead product-price ">
+                        {{ produto.preco_marketing | formatar_preco }}
+                </span>               
+                {% endif %}
+                
+            </p>
+            <form action="{% url 'produto:adicionaraocarrinho' %}" id="form-add-tp-cart">
+                <div class="form-group">
+                    <label for="select-variacoes">Selecione uma variação</label>
+                    <select id="select-variacoes" name="vid" class="form-control form-control-lg">
+                        
+                        {% for variacao in produto.variacao_set.all %}
+
+                        {% if variacao.preco_promocional %}
+                            <option 
+                            data-preco="{{ variacao.preco | formatar_preco }}"
+                            data-preco-promocional="{{ variacao.preco_promocional | formatar_preco }}"
+                            value="{{ variacao.id }}">                            
+                            {{ variacao.nome | default:variacao }}
+                            </option>
+                        {% else %}
+                            <option 
+                            data-preco="{{ variacao.preco | formatar_preco }}"
+                            value="{{ variacao.id }}">                           
+                            {{ variacao.nome | default:variacao }}
+                             </option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="text-left">
+                    <button type="submit" class="btn btn-lg btn-primary btn-block">
+                        <i class="fa fa-shopping-cart" aria-hidden="true"></i> 
+                        Adicionar ao carrinho
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-12">
+        <h2>{{ produto.nome }}</h2>
+        <p>{{ produto.descricao_longa }}</p>
+    </div>
+
+
+{% endblock %}
