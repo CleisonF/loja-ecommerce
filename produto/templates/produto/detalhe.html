@@ -29,13 +29,14 @@
                         {{ produto.preco_marketing | formatar_preco }}
                     </span>  
                 {% else %}
-                      <span id="variation-preco" class="lead product-price ">
+                    <span id="variation-preco" class="lead product-price"> 
                         {{ produto.preco_marketing | formatar_preco }}
                 </span>               
                 {% endif %}
                 
             </p>
-            <form action="{% url 'produto:adicionaraocarrinho' %}" id="form-add-tp-cart">
+            <form action="{% url 'produto:adicionaraocarrinho' %}">
+                {% csrf_token %}    
                 <div class="form-group">
                     <label for="select-variacoes">Selecione uma variação</label>
                     <select id="select-variacoes" name="vid" class="form-control form-control-lg">
@@ -47,13 +48,13 @@
                             data-preco="{{ variacao.preco | formatar_preco }}"
                             data-preco-promocional="{{ variacao.preco_promocional | formatar_preco }}"
                             value="{{ variacao.id }}">                            
-                            {{ variacao.nome | default:variacao }}
+                            {{ variacao.nome | default:produto.nome }}
                             </option>
                         {% else %}
                             <option 
                             data-preco="{{ variacao.preco | formatar_preco }}"
                             value="{{ variacao.id }}">                           
-                            {{ variacao.nome | default:variacao }}
+                            {{ variacao.nome | default:produto.nome }}
                              </option>
                         {% endif %}
                         {% endfor %}

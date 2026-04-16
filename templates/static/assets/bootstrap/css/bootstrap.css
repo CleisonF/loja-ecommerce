@@ -4340,6 +4340,14 @@ a.close.disabled {
   padding: 0.5rem 0.75rem;
   color: #212529; }
 
+
+.cart-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
 .carousel {
   position: relative; }
 

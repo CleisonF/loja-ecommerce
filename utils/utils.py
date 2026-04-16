@@ -6,5 +6,11 @@ def cart_total_qtd(carrinho):
     return total_qtd
 
 def cart_total_valor(carrinho):
-    total_valor = sum(item['quantidade'] * item['preco_unitario'] for item in carrinho.values())
-    return total_valor
+    return sum(
+        [
+            item.get('preco_quantitativo_promocional')
+            if item.get('preco_quantitativo_promocional') 
+            else item.get('preco_quantitativo')
+            for item in carrinho.values()
+        ]
+    )

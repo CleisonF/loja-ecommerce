@@ -27,7 +27,7 @@ class AdicionarAoCarrinho(View):
 
         variacao_id = str(self.request.GET.get('vid'))
         
-        if not variacao_id:
+        if not variacao_id or not variacao_id.isdigit():
             messages.error(self.request, "Produto não existe")
             return redirect(http_referer)
         
@@ -42,7 +42,7 @@ class AdicionarAoCarrinho(View):
         
         produto_id = produto.id
         produto_nome = produto.nome
-        variacao_nome = variacao.nome or ''
+        variacao_nome = variacao.nome if variacao.nome else ''
         preco_unitario = variacao.preco
         preco_unitario_promocional = variacao.preco_promocional
         slug = produto.slug
@@ -85,7 +85,10 @@ class AdicionarAoCarrinho(View):
         self.request.session['carrinho'] = carrinho
         self.request.session.save()
 
-        messages.success(self.request, f'Produto "{produto_nome} - {variacao_nome}" adicionado ao carrinho {carrinho[variacao_id]["quantidade"]}x.')
+        messages.success(
+            self.request,
+            f'Produto "{produto_nome} - {variacao_nome}" adicionado ao seu '
+            f'carrinho {carrinho[variacao_id]["quantidade"]}x.')
 
         return redirect(http_referer)
 
@@ -115,8 +118,11 @@ class RemoverDoCarrinho(View):
 
 class Carrinho(View):
     def get(self, *args, **kwargs):
-        return render(self.request, 'produto/carrinho.html')
+        contexto = {
+            'carrinho': self.request.session.get('carrinho', {})
+        }
+        return render(self.request, 'produto/carrinho.html', contexto)
 
-class Finalizar(View):
+class ResumoDaCompra(View):
     def get(self, *args, **kwargs):
-        return HttpResponse("Finalizar compra")
+        return HttpResponse("Resumo da compra")
