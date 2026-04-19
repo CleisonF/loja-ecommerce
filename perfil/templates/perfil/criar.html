@@ -1,22 +1,34 @@
 {% extends "base.html" %}
-
 {% load crispy_forms_tags %}
 
-{% block content %}
+{% block conteudo %}
+
+
 
 <div class="row">
     <div class="col-lg">
         <h1>Login</h1>
-    </div>
-    <div class="col-lg">
-        <h1>Cadastro</h1>
         <form method="post" action="">
             {% csrf_token %}
-            {{ userform|crispy }}
+            {{ login_form|crispy }}
             <div class="row">
                 <div class="col">
                     <button type="submit" class="btn btn-primary">
-                        Cadastrar
+                        Entrar
+                    </button>
+                </div>
+            </div>
+    </div>
+    <div class="col-lg">
+        <h1>Cadastro</h1>
+
+        <form method="post" action="">
+            {% csrf_token %}
+            {{ user_form|crispy }}
+            <div class="row">
+                <div class="col">
+                    <button type="submit" class="btn btn-primary">
+                        Enviar
                     </button>
                 </div>
             </div>
