@@ -13,5 +13,5 @@ urlpatterns = [
     path('resumodacompra/', views.ResumoDaCompra.as_view(), name="resumodacompra"),
 
     #Detalhe do produto, usando slug para SEO
-    path('<slug>/', views.DetalheProduto.as_view(), name="detalhe"),
+    path('produto/<slug:slug>/', views.DetalheProduto.as_view(), name="detalhe"),
 ]
