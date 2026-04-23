@@ -1,11 +1,14 @@
+from pyexpat.errors import messages
+from shutil import copy
+
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.generic import ListView
 from django.views import View
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, update_session_auth_hash, logout
 
 from . import forms
-from . import models
+
 
 class BasePerfil(View):
     template_name = 'perfil/criar.html'
@@ -15,27 +18,30 @@ class BasePerfil(View):
 
         perfil_instance = getattr(self.request.user, 'perfil', None)
 
-        if self.request.user.is_authenticated:           
-            self.contexto = {
-                'user_form': forms.UserForm(
+        if self.request.user.is_authenticated and perfil_instance:        
+            self.user_form = forms.UserForm( 
                     data=self.request.POST or None,
                     usuario=self.request.user,
                     instance=self.request.user,
-                    ),
-                'perfil_form': forms.PerfilForm(
+                    )
+            self.perfil_form = forms.PerfilForm(
                     data=self.request.POST or None,
                     instance=perfil_instance
-                    ),
-            }
+                    )
+                
         else:
-            self.contexto = {
-                'user_form': forms.UserForm(
+            self.user_form = forms.UserForm(
                     data=self.request.POST or None
-                    ),
-                'perfil_form': forms.PerfilForm(
+                    )
+            self.perfil_form = forms.PerfilForm(
                     data=self.request.POST or None
-                    ),
-            }    
+                    )
+            
+             
+        self.contexto = {
+            'user_form': self.user_form,
+            'perfil_form': self.perfil_form,
+        }
 
     def salvar_usuario(self, user_form):
         usuario = user_form.save(commit=False)
@@ -43,6 +49,7 @@ class BasePerfil(View):
         password = user_form.cleaned_data.get('password')
         if password:
             usuario.set_password(password)
+
         usuario.save()
         return usuario
 
@@ -52,64 +59,99 @@ class BasePerfil(View):
         perfil.save()
         return perfil
     
-    def autenticar_usuario(self, request, username, password):
-        if not password:
-            return
-        
+    def autenticar_usuario(self, usuario):
+         
         carrinho = self.request.session.get('carrinho', {})
 
-        usuario = authenticate(request, username=username, password=password)
+        login(self.request, usuario)
 
-        if usuario is not None:
-            login(request, usuario)
-            request.session['carrinho'] = carrinho
-            request.session.save()
+        self.request.session['carrinho'] = carrinho
+        self.request.session.save()
+                 
 
     def get(self, *args, **kwargs):
         return render(self.request, self.template_name, self.contexto)
     
+    
+
+class Criar(BasePerfil):
     def post(self, *args, **kwargs):
-        user_form = self.contexto['user_form']
-        perfil_form = self.contexto['perfil_form']
+        
+        if self.request.user.is_authenticated:
+            return redirect('perfil:atualizar')
+        
+        if self.user_form.is_valid() and self.perfil_form.is_valid():
 
-        if user_form.is_valid() and perfil_form.is_valid():
+            usuario = self.salvar_usuario(self.user_form)
+            self.salvar_perfil(self.perfil_form, usuario)
 
-            if self.request.user.is_authenticated:
-                usuario = user_form.save(commit=False)
-            else:
-                usuario = user_form.save(commit=False)
+            self.autenticar_usuario(usuario)
+            messages.success(self.request, 'Cadastro realizado com sucesso!')
 
-            password = user_form.cleaned_data.get('password')
-            if password:
-                usuario.set_password(password)
-
-            usuario = self.salvar_usuario(user_form)
-
-            self.salvar_perfil(perfil_form, usuario)
-
-            if not self.request.user.is_authenticated:
-                self.autenticar_usuario(self.request,
-                                    user_form.cleaned_data.get('username'),
-                                    user_form.cleaned_data.get('password')
-                                    )
+            return redirect('produto:lista')
+        
+        return render(self.request, self.template_name, self.contexto)
+    
+    
+class Atualizar(BasePerfil):
+    def post(self, *args, **kwargs):
+        
+        if not self.request.user.is_authenticated:
+            return redirect('perfil:login')
+        
+        if self.user_form.is_valid() and self.perfil_form.is_valid():
             
+            usuario = self.salvar_usuario(self.user_form)
+
+            if self.user_form.cleaned_data.get('password'):
+                update_session_auth_hash(self.request, usuario)
+            
+            self.salvar_perfil(self.perfil_form, usuario)
+
+            messages.success(self.request, 'Perfil atualizado com sucesso!')
+
             return redirect('perfil:atualizar')
         
         return render(self.request, self.template_name, self.contexto)
 
-
-
-class Criar(BasePerfil):
-        pass
-    
-    
-class Atualizar(View):
-    pass
-
 class Login(View):
-    pass
+    def post(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect('produto:lista')
+        
+        username = self.request.POST.get('username')
+        password = self.request.POST.get('password')
+
+        if not username or not password:
+            messages.error(self.request, 'Preencha todos os campos para efetuar o login.')
+            return redirect('perfil:criar')
+        
+        usuario = authenticate(self.request, username=username, password=password)
+
+        if usuario:
+            carrinho = copy.deepcopy(self.request.session.get('carrinho', {}))
+
+            login(self.request, usuario)
+
+            self.request.session['carrinho'] = carrinho
+            self.request.session.save()
+
+            next_url = self.request.GET.get('next')
+            return redirect(next_url if next_url else 'produto:carrinho')
+        
+        messages.error(self.request, 'Usuário ou senha inválidos.')
+        return redirect('perfil:criar')
 
 class Logout(View):
-    pass
+    def get(self, *args, **kwargs):
+
+        if carrinho:
+            carrinho = copy.deepcopy(self.request.session.get('carrinho', {}))
+        logout(self.request)
+
+        self.request.session['carrinho'] = carrinho
+        self.request.session.save()
+
+        return redirect('produto:lista')
 
 
