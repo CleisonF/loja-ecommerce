@@ -1,12 +1,12 @@
-from pyexpat.errors import messages
-from shutil import copy
+from django.contrib import messages
 
-from django.http import HttpResponse
+from django.utils.http import url_has_allowed_host_and_scheme
+
 from django.shortcuts import redirect, render
-from django.views.generic import ListView
+
 from django.views import View
 from django.contrib.auth import authenticate, login, update_session_auth_hash, logout
-
+from copy import deepcopy
 from . import forms
 
 
@@ -18,25 +18,16 @@ class BasePerfil(View):
 
         perfil_instance = getattr(self.request.user, 'perfil', None)
 
-        if self.request.user.is_authenticated and perfil_instance:        
-            self.user_form = forms.UserForm( 
-                    data=self.request.POST or None,
-                    usuario=self.request.user,
-                    instance=self.request.user,
-                    )
-            self.perfil_form = forms.PerfilForm(
-                    data=self.request.POST or None,
-                    instance=perfil_instance
-                    )
-                
-        else:
-            self.user_form = forms.UserForm(
-                    data=self.request.POST or None
-                    )
-            self.perfil_form = forms.PerfilForm(
-                    data=self.request.POST or None
-                    )
-            
+        self.user_form = forms.UserForm(
+            data=self.request.POST or None,
+            usuario=self.request.user if self.request.user.is_authenticated else None,
+            instance=self.request.user if self.request.user.is_authenticated else None,
+            )
+
+        self.perfil_form = forms.PerfilForm(
+            data=self.request.POST or None,
+            instance=perfil_instance
+        )    
              
         self.contexto = {
             'user_form': self.user_form,
@@ -115,21 +106,27 @@ class Atualizar(BasePerfil):
         return render(self.request, self.template_name, self.contexto)
 
 class Login(View):
+    template_name = 'perfil/login.html'
+
+    def get(self, *args, **kwargs):
+        return render(self.request, self.template_name)   
+
     def post(self, *args, **kwargs):
         if self.request.user.is_authenticated:
             return redirect('produto:lista')
         
         username = self.request.POST.get('username')
         password = self.request.POST.get('password')
-
+        
+        
         if not username or not password:
             messages.error(self.request, 'Preencha todos os campos para efetuar o login.')
-            return redirect('perfil:criar')
+            return redirect('perfil:login')
         
         usuario = authenticate(self.request, username=username, password=password)
 
         if usuario:
-            carrinho = copy.deepcopy(self.request.session.get('carrinho', {}))
+            carrinho = deepcopy(self.request.session.get('carrinho', {}))
 
             login(self.request, usuario)
 
@@ -137,16 +134,18 @@ class Login(View):
             self.request.session.save()
 
             next_url = self.request.GET.get('next')
-            return redirect(next_url if next_url else 'produto:carrinho')
+            if url_has_allowed_host_and_scheme(next_url, allowed_hosts={self.request.get_host()}):
+                return redirect(next_url)
+            return redirect('perfil:login')
         
         messages.error(self.request, 'Usuário ou senha inválidos.')
-        return redirect('perfil:criar')
+        return redirect('perfil:login')
 
 class Logout(View):
     def get(self, *args, **kwargs):
 
-        if carrinho:
-            carrinho = copy.deepcopy(self.request.session.get('carrinho', {}))
+        carrinho = deepcopy(self.request.session.get('carrinho', {}))
+
         logout(self.request)
 
         self.request.session['carrinho'] = carrinho
