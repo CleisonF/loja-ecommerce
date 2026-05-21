@@ -101,7 +101,7 @@ class Atualizar(BasePerfil):
 
             messages.success(self.request, 'Perfil atualizado com sucesso!')
 
-            return redirect('perfil:atualizar')
+            return redirect('pedido:resumodacompra')
         
         return render(self.request, self.template_name, self.contexto)
 
@@ -136,10 +136,10 @@ class Login(View):
             next_url = self.request.GET.get('next')
             if url_has_allowed_host_and_scheme(next_url, allowed_hosts={self.request.get_host()}):
                 return redirect(next_url)
-            return redirect('perfil:login')
+            return redirect('produto:lista')
         
         messages.error(self.request, 'Usuário ou senha inválidos.')
-        return redirect('perfil:login')
+        return redirect('produto:lista')
 
 class Logout(View):
     def get(self, *args, **kwargs):

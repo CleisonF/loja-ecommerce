@@ -130,4 +130,32 @@ class Carrinho(View):
 
 class ResumoDaCompra(View):
     def get(self, *args, **kwargs):
-        return HttpResponse("Resumo da compra")
+        
+        if not self.request.user.is_authenticated:
+            messages.error(
+                self.request, 
+                "Faça login para finalizar sua compra."
+            )
+            
+            return redirect('perfil:perfil')
+        
+        carrinho = self.request.session.get('carrinho')
+
+        if not carrinho:
+            messages.error(
+                self.request,
+                "Seu carrinho está vazio."
+            )
+            
+            return redirect('produto:lista')
+        
+        contexto = {
+            'usuario': self.request.user,
+            'carrinho': carrinho,
+        }
+
+        return render(
+            self.request, 
+            'produto/resumodacompra.html', 
+            contexto
+        )

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+{% load filters %}
+
+
+{% block conteudo %}
+
+<div class="row mb-5">
+    <div class="col-lg">
+        <h3>Resumo da sua compra</h3>
+        <p class="lead">Confira os detalhes da sua compra antes de finalizar</p>
+        <p>Caso precise editar, <a href="{% url 'perfil:criar' %}">clique aqui</a></p>
+        <dl class="row">
+            <h4 class="col-12 mb-3">Dados pessoais</h4>
+            
+            <dt class="col-lg-3">Nome:</dt>
+            <dd class="col-sm-9">{{ usuario.first_name }} {{ usuario.last_name }}</dd>
+
+            <dt class="col-sm-3">Email:</dt>
+            <dd class="col-sm-9">{{ usuario.email }}</dd>
+
+            <dt class="col-sm-3">CPF:</dt>
+            <dd class="col-sm-9">{{ usuario.perfil.cpf }}</dd>
+
+            <h4 class="col-12 mt-4">Endereço de entrega</h4>
+
+            <dt class="col-sm-3">Endereço:</dt>
+            <dd class="col-sm-9">{{ usuario.perfil.endereco }}</dd>
+
+            <dt class="col-sm-3">Número:</dt>
+            <dd class="col-sm-9">{{ usuario.perfil.numero }}</dd>
+
+            <dt class="col-sm-3">Complemento:</dt>
+            <dd class="col-sm-9">{{ usuario.perfil.complemento }}</dd>
+
+            <dt class="col-sm-3">Bairro:</dt>
+            <dd class="col-sm-9">{{ usuario.perfil.bairro }}</dd>
+
+            <dt class="col-sm-3">Cidade:</dt>
+            <dd class="col-sm-9">{{ usuario.perfil.cidade }}</dd>
+
+            <dt class="col-sm-3">Estado:</dt>
+            <dd class="col-sm-9">{{ usuario.perfil.estado }}</dd>
+
+            <dt class="col-sm-3">CEP:</dt>
+            <dd class="col-sm-9">{{ usuario.perfil.cep }}</dd>
+        </dl>
+    </div>
+
+
+    <div class="row">
+        <div class="col">
+            <h4>Produtos no carrinho</h4>
+            <p class="lead">Confira os produtos que você adicionou ao carrinho</p>
+            
+            <div class="table-responsive">
+                <table class="table">              
+                    <tr>
+                        <th class="d-none d-lg-block">Imagem</th>
+                        <th>Produto</th>
+                        <th>Variação</th>
+                        <th>Quantidade</th>
+                        <th>Total</th>
+                    </tr>
+                    
+                    {% for item in carrinho.values %}
+                    <tr>
+                        <td class="d-none d-lg-block">
+                            <img class="cart-img"
+                            src="{% get_media_prefix %}{{ item.imagem }}"
+                            alt="{{ item.produto_nome }}"
+                            style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;    ">
+                        </td>
+                        <td>{{ item.produto_nome }}</td>
+
+                        <td>{{ item.variacao_nome|default:item.produto_nome }}</td>
+                        <td>
+                            {{ item.quantidade }} x
+                            {% if item.preco_unitario_promocional %}
+                                {{ item.preco_unitario_promocional|formatar_preco }}
+                            {% else %}
+                                {{ item.preco_unitario|formatar_preco }}
+                            {% endif %}
+                        </td>
+
+                        {% if item.preco_quantitativo_promocional %}
+                            <td>{{ item.preco_quantitativo_promocional|formatar_preco }}</td>
+                        {% else %}
+                            <td>{{ item.preco_quantitativo|formatar_preco }}</td>
+                        {% endif %}
+                    </tr>
+                    
+                    {% endfor %}
+                    
+                </table>
+                <div class="col">
+                    <p class='lead'>Total a pagar</p>
+
+                    <div class='table-responsive'>
+                        <table class="table">
+                            <tr>
+                                <td class="font-weight-bold">Total</td>
+                                <td>{{ carrinho|cart_total_valor|formatar_preco }}</td>
+                            </tr>
+                        </table>
+                    </div>
+            </div>
+            <div class="col-lg mt-auto">
+                <a class="btn btn-lg btn-block btn-primary" href="{% url 'pedido:pagar' %}">
+                    Realizar pedido
+                </a>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
